@@ -5,32 +5,45 @@
 <title>Ramadan Dashboard</title>
 
 <style>
-body{
- font-family:system-ui;
- background:linear-gradient(#dbeafe,#f8fafc);
- padding:12px;
- color:#0f172a;
+:root{
+ --bg:linear-gradient(#dbeafe,#f8fafc);
+ --text:#0f172a;
+ --glass:rgba(255,255,255,0.6);
 }
 
-h1{text-align:center;margin-bottom:10px}
+.dark{
+ --bg:#020617;
+ --text:white;
+ --glass:rgba(255,255,255,0.08);
+}
+
+body{
+ margin:0;
+ font-family:system-ui;
+ background:var(--bg);
+ color:var(--text);
+ padding:12px;
+ margin-bottom:70px;
+ transition:.3s;
+}
+
+h1{text-align:center}
 
 /* glass card */
 .glass{
  backdrop-filter:blur(14px);
- background:rgba(255,255,255,0.6);
- border:1px solid rgba(255,255,255,0.8);
+ background:var(--glass);
  border-radius:18px;
- box-shadow:0 8px 20px rgba(0,0,0,.1);
-}
-
-.dashboard{
+ border:1px solid rgba(255,255,255,.4);
  padding:16px;
- text-align:center;
- font-weight:bold;
- margin-bottom:14px;
+ margin-bottom:12px;
+ animation:fade .6s ease;
 }
 
-.temp{font-size:14px;margin-top:4px}
+@keyframes fade{
+ from{opacity:0;transform:translateY(10px)}
+ to{opacity:1}
+}
 
 .grid{
  display:grid;
@@ -38,13 +51,25 @@ h1{text-align:center;margin-bottom:10px}
  gap:10px;
 }
 
-.month{
- padding:16px;
- text-align:center;
- cursor:pointer;
+.month{cursor:pointer;text-align:center}
+
+/* bottom nav */
+.bottom{
+ position:fixed;
+ bottom:0;left:0;right:0;
+ display:flex;
+ background:var(--glass);
+ backdrop-filter:blur(14px);
+ border-top:1px solid rgba(255,255,255,.3);
 }
 
-.month:hover{background:#22c55e;color:white}
+.bottom button{
+ flex:1;
+ padding:12px;
+ border:none;
+ background:none;
+ font-size:16px;
+}
 </style>
 </head>
 
@@ -52,11 +77,24 @@ h1{text-align:center;margin-bottom:10px}
 
 <h1>🌙 Ramadan</h1>
 
-<div class="dashboard glass" id="dash">Loading…</div>
+<div class="glass" id="dash">Loading…</div>
 
 <div class="grid" id="cal"></div>
 
+<div class="bottom">
+<button onclick="location.href='index.html'">🏠</button>
+<button onclick="toggleTheme()">🌗</button>
+</div>
+
 <script>
+function toggleTheme(){
+ document.body.classList.toggle("dark");
+ localStorage.setItem("theme",
+ document.body.classList.contains("dark")?"dark":"light");
+}
+if(localStorage.getItem("theme")==="dark")
+ document.body.classList.add("dark");
+
 function to12(t){
  let [h,m]=t.split(":");
  h=parseInt(h);
@@ -76,20 +114,20 @@ async function loadDash(){
  );
  const j=await r.json();
  const t=j.data.timings;
+ const hijri=j.data.date.hijri;
 
  document.getElementById("dash").innerHTML=
- `Today — Ruwais 🇶🇦<br>
+ `Hijri: ${hijri.day} ${hijri.month.en} ${hijri.year}<br>
  Sehri: ${to12(t.Fajr)}<br>
  Iftar: ${to12(t.Maghrib)}`;
-}
 
-async function weather(){
- const r=await fetch(
+ const w=await fetch(
  `https://api.open-meteo.com/v1/forecast?latitude=25.89&longitude=51.19&current_weather=true`
  );
- const w=await r.json();
+ const weather=await w.json();
+
  document.getElementById("dash").innerHTML+=
- `<div class="temp">🌡 ${w.current_weather.temperature}°C</div>`;
+ `<br>🌡 ${weather.current_weather.temperature}°C`;
 }
 
 const months=[
@@ -99,14 +137,13 @@ const months=[
 
 months.forEach((m,i)=>{
  const d=document.createElement("div");
- d.className="month glass";
+ d.className="glass month";
  d.innerText=m;
  d.onclick=()=>location.href=`month.html?m=${i}`;
  document.getElementById("cal").appendChild(d);
 });
 
 loadDash();
-weather();
 </script>
 
 </body>
