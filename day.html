@@ -5,17 +5,15 @@
 <title>Day Details</title>
 
 <style>
-body{
- font-family:system-ui;
- background:#020617;
- color:white;
- padding:12px;
+body{font-family:system-ui;background:#020617;color:white;padding:12px}
+
+.nav{display:flex;gap:10px;margin-bottom:10px}
+.nav button{
+ flex:1;padding:10px;border:none;border-radius:10px;
+ background:#22c55e;color:black;font-weight:bold
 }
 
-.header{
- text-align:center;
- margin-bottom:10px;
-}
+.header{text-align:center;margin-bottom:10px}
 
 .off{
  background:#facc15;
@@ -52,9 +50,14 @@ body{
 
 <body>
 
+<div class="nav">
+<button onclick="location.href='index.html'">🏠 Home</button>
+<button onclick="history.back()">⬅ Back</button>
+</div>
+
 <div class="header">
- <h2 id="date"></h2>
- <div id="offBadge"></div>
+<h2 id="date"></h2>
+<div id="offBadge"></div>
 </div>
 
 <div class="temp" id="temp">Loading weather…</div>
@@ -69,12 +72,11 @@ const year=new Date().getFullYear();
 const dateObj=new Date(year,m,d);
 const weekday=dateObj.toLocaleDateString("en-US",{weekday:"long"});
 document.getElementById("date").innerText=
- `${weekday}, ${dateObj.toDateString()}`;
+`${weekday}, ${dateObj.toDateString()}`;
 
-/* Qatar weekend = Friday (5) + Saturday (6) */
 if(dateObj.getDay()==5 || dateObj.getDay()==6){
  document.getElementById("offBadge").innerHTML=
-  '<div class="off">OFF DAY</div>';
+ '<div class="off">OFF DAY</div>';
 }
 
 function to12(t){
@@ -117,7 +119,7 @@ async function weather(){
  );
  const w=await r.json();
  document.getElementById("temp").innerText=
-  `Temperature: ${w.current_weather.temperature}°C`;
+ `Temperature: ${w.current_weather.temperature}°C`;
 }
 
 loadPrayer();
