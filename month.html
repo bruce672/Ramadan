@@ -3,18 +3,56 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Month</title>
+
 <style>
-body{font-family:system-ui;background:#020617;color:white;padding:10px}
-.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+body{
+ font-family:system-ui;
+ background:#020617;
+ color:white;
+ padding:12px;
+}
+
+h2{
+ text-align:center;
+ margin-bottom:10px;
+}
+
+.grid{
+ display:grid;
+ grid-template-columns:repeat(7,1fr);
+ gap:6px;
+}
+
 .day{
- background:rgba(255,255,255,0.08);
- border-radius:10px;
- padding:10px;
+ background:#111827;
+ border-radius:12px;
+ padding:6px;
  text-align:center;
  cursor:pointer;
+ font-size:12px;
 }
-.day:hover{background:#22c55e;color:black}
-.today{background:#facc15;color:black;font-weight:bold}
+
+.day:hover{
+ background:#22c55e;
+ color:black;
+}
+
+.today{
+ background:#facc15;
+ color:black;
+ font-weight:bold;
+}
+
+.off{
+ background:#ef4444;
+ color:white;
+}
+
+.event{
+ font-size:9px;
+ opacity:.8;
+ margin-top:2px;
+}
 </style>
 </head>
 
@@ -35,18 +73,40 @@ const months=[
 document.getElementById("title").innerText=months[m];
 
 const year=new Date().getFullYear();
-const days=new Date(year,m+1,0).getDate();
+const totalDays=new Date(year,m+1,0).getDate();
 const today=new Date();
 
-for(let i=1;i<=days;i++){
+/* Qatar events */
+const events={
+ "12-18":"National Day 🇶🇦",
+ "3-11":"Sports Day",
+};
+
+for(let i=1;i<=totalDays;i++){
+
+ const dateObj=new Date(year,m,i);
+ const weekday=dateObj.toLocaleDateString("en-US",{weekday:"short"});
+ const key=`${m+1}-${i}`;
+
  const d=document.createElement("div");
  d.className="day";
- d.innerText=i;
+
+ let label=`${i}<br>${weekday}`;
+
+ if(events[key])
+  label+=`<div class="event">${events[key]}</div>`;
+
+ d.innerHTML=label;
 
  if(today.getMonth()==m && today.getDate()==i)
   d.classList.add("today");
 
+/* Qatar weekend Fri(5) Sat(6) */
+ if(dateObj.getDay()==5 || dateObj.getDay()==6)
+  d.classList.add("off");
+
  d.onclick=()=>location.href=`day.html?m=${m}&d=${i}`;
+
  document.getElementById("days").appendChild(d);
 }
 </script>
