@@ -1,120 +1,43 @@
-l<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>12 Month Calendar</title>
-
+<title>Calendar</title>
 <style>
-body{
- font-family:system-ui;
- background:radial-gradient(circle,#1e293b,#020617);
- color:white;
- margin:0;
- padding:10px;
-}
-
-h1{
- text-align:center;
- color:#facc15;
-}
-
-.grid{
- display:grid;
- grid-template-columns:repeat(2,1fr);
- gap:10px;
-}
-
-@media(min-width:700px){
- .grid{grid-template-columns:repeat(3,1fr);}
-}
-
+body{font-family:system-ui;background:#020617;color:white;padding:10px}
+h1{text-align:center;color:#facc15}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .month{
- backdrop-filter:blur(10px);
  background:rgba(255,255,255,0.08);
  border:1px solid rgba(255,255,255,0.15);
  border-radius:14px;
- padding:8px;
- font-size:12px;
-}
-
-.month h3{
+ padding:14px;
  text-align:center;
- margin:4px 0;
- color:#38bdf8;
+ cursor:pointer;
 }
-
-.days{
- display:grid;
- grid-template-columns:repeat(7,1fr);
- gap:2px;
-}
-
-.day{
- padding:4px;
- text-align:center;
- border-radius:6px;
-}
-
-.today{
- background:#22c55e;
- color:black;
- font-weight:bold;
-}
-
-.ramadan{
- background:#facc15;
- color:black;
- font-weight:bold;
-}
+.month:hover{background:#22c55e;color:black}
 </style>
 </head>
 
 <body>
 
-<h1>📅 12 Month Calendar</h1>
-<div class="grid" id="calendar"></div>
+<h1>📅 Calendar</h1>
+<div class="grid" id="cal"></div>
 
 <script>
-const year=new Date().getFullYear();
-const today=new Date();
-
 const months=[
 "January","February","March","April","May","June",
 "July","August","September","October","November","December"
 ];
 
-// Approx Ramadan month highlight (March example)
-const ramadanMonth=2; // March index (0-based)
-
-const cal=document.getElementById("calendar");
+const cal=document.getElementById("cal");
 
 months.forEach((m,i)=>{
- const monthDiv=document.createElement("div");
- monthDiv.className="month";
- monthDiv.innerHTML=`<h3>${m} ${year}</h3>`;
-
- const daysDiv=document.createElement("div");
- daysDiv.className="days";
-
- const days=new Date(year,i+1,0).getDate();
-
- for(let d=1; d<=days; d++){
-  const cell=document.createElement("div");
-  cell.className="day";
-  cell.innerText=d;
-
-  if(i===today.getMonth() && d===today.getDate())
-    cell.classList.add("today");
-
-  if(i===ramadanMonth)
-    cell.classList.add("ramadan");
-
-  daysDiv.appendChild(cell);
- }
-
- monthDiv.appendChild(daysDiv);
- cal.appendChild(monthDiv);
+ const d=document.createElement("div");
+ d.className="month";
+ d.innerText=m;
+ d.onclick=()=>location.href=`month.html?m=${i}`;
+ cal.appendChild(d);
 });
 </script>
 
