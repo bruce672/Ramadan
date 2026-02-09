@@ -2,70 +2,146 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Day</title>
+<title>Date Dashboard</title>
 
 <style>
+:root{
+ --bg:#f3f4f6;
+ --panel:white;
+ --accent:#ff5a36;
+ --text:#111;
+}
+
+.dark{
+ --bg:#020617;
+ --panel:rgba(255,255,255,0.08);
+ --accent:#22c55e;
+ --text:white;
+}
+
 body{
+ margin:0;
  font-family:system-ui;
- background:linear-gradient(#dbeafe,#f8fafc);
- padding:12px;
- color:#0f172a;
+ background:var(--bg);
+ color:var(--text);
+ display:flex;
+ height:100vh;
+ overflow:hidden;
 }
 
-.nav{display:flex;gap:8px;margin-bottom:10px}
-.nav button{
- flex:1;padding:10px;border:none;border-radius:12px;
- background:#22c55e;color:white;font-weight:bold
+/* sidebar */
+.side{
+ width:35%;
+ min-width:180px;
+ background:var(--panel);
+ padding:20px;
+ display:flex;
+ flex-direction:column;
+ justify-content:center;
+ align-items:center;
+ backdrop-filter:blur(10px);
 }
 
-.glass{
- backdrop-filter:blur(14px);
- background:rgba(255,255,255,0.6);
- border:1px solid rgba(255,255,255,0.8);
- border-radius:16px;
+.big{
+ font-size:80px;
+ font-weight:bold;
+ color:var(--accent);
+}
+
+.month{
+ font-size:20px;
+ opacity:.8;
+ text-align:center;
+}
+
+/* main */
+.main{
+ flex:1;
+ padding:16px;
+ overflow:auto;
+}
+
+.card{
+ background:var(--panel);
  padding:14px;
+ border-radius:16px;
  margin-bottom:10px;
+ backdrop-filter:blur(10px);
+ animation:fade .4s ease;
 }
 
-.next{background:#22c55e;color:white;font-weight:bold}
-.off{
- background:#facc15;
- padding:6px 10px;
- border-radius:10px;
- display:inline-block;
+@keyframes fade{
+ from{opacity:0;transform:translateY(10px)}
+ to{opacity:1}
+}
+
+.next{
+ background:var(--accent);
+ color:white;
  font-weight:bold;
 }
 
-.temp{text-align:center;font-size:18px}
+/* bottom nav */
+.bottom{
+ position:fixed;
+ bottom:0;
+ left:0;
+ right:0;
+ display:flex;
+ background:var(--panel);
+ backdrop-filter:blur(10px);
+}
+
+.bottom button{
+ flex:1;
+ padding:12px;
+ border:none;
+ background:none;
+ font-size:16px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="nav">
-<button onclick="location.href='index.html'">🏠 Home</button>
-<button onclick="history.back()">⬅ Back</button>
+<div class="side">
+ <div class="big" id="bigDate">--</div>
+ <div class="month" id="bigMonth"></div>
 </div>
 
-<h2 id="date"></h2>
-<div id="off"></div>
+<div class="main">
 
-<div class="glass temp" id="temp">Loading weather…</div>
+<div class="card" id="hijri">Loading…</div>
+<div class="card" id="temp">Loading weather…</div>
 <div id="times"></div>
 
+</div>
+
+<div class="bottom">
+<button onclick="location.href='index.html'">🏠</button>
+<button onclick="history.back()">⬅</button>
+<button onclick="toggleTheme()">🌗</button>
+</div>
+
 <script>
+function toggleTheme(){
+ document.body.classList.toggle("dark");
+ localStorage.setItem("theme",
+ document.body.classList.contains("dark")?"dark":"light");
+}
+if(localStorage.getItem("theme")==="dark")
+ document.body.classList.add("dark");
+
 const q=new URLSearchParams(location.search);
 const m=parseInt(q.get("m"));
 const d=parseInt(q.get("d"));
-const year=new Date().getFullYear();
+const y=new Date().getFullYear();
 
-const dateObj=new Date(year,m,d);
-document.getElementById("date").innerText=
-dateObj.toDateString();
+const dateObj=new Date(y,m,d);
 
-if(dateObj.getDay()==5 || dateObj.getDay()==6)
- document.getElementById("off").innerHTML=
- '<div class="off">OFF DAY</div>';
+document.getElementById("bigDate").innerText=d;
+document.getElementById("bigMonth").innerText=
+dateObj.toLocaleDateString("en-US",{month:"long",year:"numeric"});
 
 function to12(t){
  let [h,m]=t.split(":");
@@ -75,19 +151,23 @@ function to12(t){
  return `${h}:${m} ${a}`;
 }
 
-async function loadPrayer(){
+async function load(){
  const r=await fetch(
- `https://api.aladhan.com/v1/timingsByCity/${d}-${m+1}-${year}?city=Ruwais&country=Qatar`
+ `https://api.aladhan.com/v1/timingsByCity/${d}-${m+1}-${y}?city=Ruwais&country=Qatar`
  );
  const j=await r.json();
  const t=j.data.timings;
+ const hijri=j.data.date.hijri;
+
+ document.getElementById("hijri").innerHTML=
+ `Hijri: ${hijri.day} ${hijri.month.en} ${hijri.year}`;
 
  const order=["Fajr","Dhuhr","Asr","Maghrib","Isha"];
  const now=new Date();
 
  order.forEach(p=>{
   const c=document.createElement("div");
-  c.className="glass";
+  c.className="card";
   c.innerText=p+" — "+to12(t[p]);
 
   const pt=new Date();
@@ -99,19 +179,17 @@ async function loadPrayer(){
 
   document.getElementById("times").appendChild(c);
  });
-}
 
-async function weather(){
- const r=await fetch(
+ const w=await fetch(
  `https://api.open-meteo.com/v1/forecast?latitude=25.89&longitude=51.19&current_weather=true`
  );
- const w=await r.json();
+ const weather=await w.json();
+
  document.getElementById("temp").innerText=
- `🌡 ${w.current_weather.temperature}°C`;
+ `🌡 Temperature: ${weather.current_weather.temperature}°C`;
 }
 
-loadPrayer();
-weather();
+load();
 </script>
 
 </body>
