@@ -5,32 +5,36 @@
 <title>Month</title>
 
 <style>
-body{font-family:system-ui;background:#020617;color:white;padding:12px}
-
-.nav{display:flex;gap:10px;margin-bottom:10px}
-.nav button{
- flex:1;padding:10px;border:none;border-radius:10px;
- background:#22c55e;color:black;font-weight:bold
+body{
+ font-family:system-ui;
+ background:linear-gradient(#dbeafe,#f8fafc);
+ padding:12px;
+ color:#0f172a;
 }
 
-h2{text-align:center;margin-bottom:10px}
+.nav{display:flex;gap:8px;margin-bottom:10px}
+.nav button{
+ flex:1;padding:10px;border:none;border-radius:12px;
+ background:#22c55e;color:white;font-weight:bold
+}
+
+.glass{
+ backdrop-filter:blur(14px);
+ background:rgba(255,255,255,0.6);
+ border:1px solid rgba(255,255,255,0.8);
+ border-radius:14px;
+}
 
 .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 
 .day{
- background:#111827;
- border-radius:12px;
- padding:6px;
- text-align:center;
- cursor:pointer;
- font-size:12px;
+ padding:6px;text-align:center;cursor:pointer;font-size:12px
 }
 
-.day:hover{background:#22c55e;color:black}
-.today{background:#facc15;color:black;font-weight:bold}
+.today{background:#facc15;font-weight:bold}
 .off{background:#ef4444;color:white}
 
-.event{font-size:9px;opacity:.8;margin-top:2px}
+.event{font-size:9px;opacity:.7}
 </style>
 </head>
 
@@ -65,20 +69,16 @@ const events={
 };
 
 for(let i=1;i<=totalDays;i++){
-
  const dateObj=new Date(year,m,i);
  const weekday=dateObj.toLocaleDateString("en-US",{weekday:"short"});
  const key=`${m+1}-${i}`;
 
  const d=document.createElement("div");
- d.className="day";
-
- let label=`${i}<br>${weekday}`;
+ d.className="day glass";
+ d.innerHTML=`${i}<br>${weekday}`;
 
  if(events[key])
-  label+=`<div class="event">${events[key]}</div>`;
-
- d.innerHTML=label;
+  d.innerHTML+=`<div class="event">${events[key]}</div>`;
 
  if(today.getMonth()==m && today.getDate()==i)
   d.classList.add("today");
@@ -87,7 +87,6 @@ for(let i=1;i<=totalDays;i++){
   d.classList.add("off");
 
  d.onclick=()=>location.href=`day.html?m=${m}&d=${i}`;
-
  document.getElementById("days").appendChild(d);
 }
 </script>
