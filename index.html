@@ -3,10 +3,17 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Calendar</title>
+
 <style>
-body{font-family:system-ui;background:#020617;color:white;padding:10px}
+body{font-family:system-ui;background:#020617;color:white;padding:12px}
 h1{text-align:center;color:#facc15}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+
+.grid{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:10px;
+}
+
 .month{
  background:rgba(255,255,255,0.08);
  border:1px solid rgba(255,255,255,0.15);
@@ -15,6 +22,7 @@ h1{text-align:center;color:#facc15}
  text-align:center;
  cursor:pointer;
 }
+
 .month:hover{background:#22c55e;color:black}
 </style>
 </head>
