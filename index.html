@@ -1,136 +1,122 @@
-<!DOCTYPE html>
-<html lang="en">
+l<!DOCTYPE html>
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ruwais Ramadan Crystal</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>12 Month Calendar</title>
 
 <style>
-body {
-  margin:0;
-  font-family: system-ui;
-  background: radial-gradient(circle at top,#1e293b,#020617);
-  color:white;
+body{
+ font-family:system-ui;
+ background:radial-gradient(circle,#1e293b,#020617);
+ color:white;
+ margin:0;
+ padding:10px;
 }
 
-/* TOP BAR */
-.topbar{
-  backdrop-filter: blur(12px);
-  background: rgba(255,255,255,0.08);
-  border-bottom:1px solid rgba(255,255,255,0.2);
-  padding:14px;
-  text-align:center;
+h1{
+ text-align:center;
+ color:#facc15;
 }
 
-.clock{
-  font-size:28px;
-  font-weight:bold;
-  color:#38bdf8;
+.grid{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:10px;
 }
 
-.iftar-big{
-  font-size:22px;
-  color:#22c55e;
+@media(min-width:700px){
+ .grid{grid-template-columns:repeat(3,1fr);}
 }
 
-/* DAY CARDS */
-.container{
-  padding:15px;
+.month{
+ backdrop-filter:blur(10px);
+ background:rgba(255,255,255,0.08);
+ border:1px solid rgba(255,255,255,0.15);
+ border-radius:14px;
+ padding:8px;
+ font-size:12px;
 }
 
-.card{
-  backdrop-filter: blur(12px);
-  background: rgba(255,255,255,0.08);
-  border:1px solid rgba(255,255,255,0.15);
-  border-radius:18px;
-  padding:14px;
-  margin-bottom:14px;
-  box-shadow:0 0 20px rgba(0,0,0,0.3);
+.month h3{
+ text-align:center;
+ margin:4px 0;
+ color:#38bdf8;
+}
+
+.days{
+ display:grid;
+ grid-template-columns:repeat(7,1fr);
+ gap:2px;
+}
+
+.day{
+ padding:4px;
+ text-align:center;
+ border-radius:6px;
 }
 
 .today{
-  background: linear-gradient(135deg,#22c55e,#38bdf8);
-  color:black;
-  font-weight:bold;
+ background:#22c55e;
+ color:black;
+ font-weight:bold;
 }
 
-.header{
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:8px;
-  font-weight:bold;
-}
-
-.times{
-  display:grid;
-  grid-template-columns: repeat(3,1fr);
-  gap:8px;
-  font-size:13px;
-}
-
-.timebox{
-  padding:6px;
-  border-radius:10px;
-  background:rgba(0,0,0,0.2);
-  text-align:center;
-}
-
-.highlight{
-  background:#facc15;
-  color:black;
-  font-weight:bold;
+.ramadan{
+ background:#facc15;
+ color:black;
+ font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
-<div class="topbar">
-  <div>Current Time — Qatar</div>
-  <div class="clock" id="clock">--:--</div>
-  <div class="iftar-big" id="bigIftar">Loading Iftar...</div>
-</div>
-
-<div class="container" id="cards"></div>
+<h1>📅 12 Month Calendar</h1>
+<div class="grid" id="calendar"></div>
 
 <script>
-function to12hr(t){
- let [h,m]=t.split(":");
- h=parseInt(h);
- const ampm=h>=12?"PM":"AM";
- h=h%12||12;
- return `${h}:${m} ${ampm}`;
-}
+const year=new Date().getFullYear();
+const today=new Date();
 
-function updateClock(){
- const now=new Date();
- document.getElementById("clock").innerText=
-  now.toLocaleTimeString("en-US",{hour12:true});
-}
-setInterval(updateClock,1000);
-updateClock();
+const months=[
+"January","February","March","April","May","June",
+"July","August","September","October","November","December"
+];
 
-async function load(){
- const year=new Date().getFullYear();
- const res=await fetch(`https://api.aladhan.com/v1/calendarByCity/${year}/3?city=Ruwais&country=Qatar&method=2`);
- const data=await res.json();
- const today=new Date();
+// Approx Ramadan month highlight (March example)
+const ramadanMonth=2; // March index (0-based)
 
- const container=document.getElementById("cards");
+const cal=document.getElementById("calendar");
 
- data.data.forEach((d,i)=>{
-  const date=new Date(d.date.gregorian.date);
-  if(date<today.setHours(0,0,0,0)) return;
+months.forEach((m,i)=>{
+ const monthDiv=document.createElement("div");
+ monthDiv.className="month";
+ monthDiv.innerHTML=`<h3>${m} ${year}</h3>`;
 
-  const fajr=to12hr(d.timings.Fajr.split(" ")[0]);
-  const dhuhr=to12hr(d.timings.Dhuhr.split(" ")[0]);
-  const asr=to12hr(d.timings.Asr.split(" ")[0]);
-  const maghrib=to12hr(d.timings.Maghrib.split(" ")[0]);
-  const isha=to12hr(d.timings.Isha.split(" ")[0]);
+ const daysDiv=document.createElement("div");
+ daysDiv.className="days";
 
-  const card=document.createElement("div");
-  card.className="card";
+ const days=new Date(year,i+1,0).getDate();
 
-  if(date.toDateString()===new Date().toDateString()){
-    card.classList.add("today");
-    document.get
+ for(let d=1; d<=days; d++){
+  const cell=document.createElement("div");
+  cell.className="day";
+  cell.innerText=d;
+
+  if(i===today.getMonth() && d===today.getDate())
+    cell.classList.add("today");
+
+  if(i===ramadanMonth)
+    cell.classList.add("ramadan");
+
+  daysDiv.appendChild(cell);
+ }
+
+ monthDiv.appendChild(daysDiv);
+ cal.appendChild(monthDiv);
+});
+</script>
+
+</body>
+</html>
