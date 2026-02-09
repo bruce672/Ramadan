@@ -7,43 +7,65 @@
 
 <style>
 body {
-  font-family: Arial, sans-serif;
-  background: #0f172a;
+  font-family: system-ui, Arial;
+  background: #020617;
   color: white;
+  margin: 0;
   padding: 20px;
-  text-align: center;
 }
 
 h1 {
+  text-align: center;
   color: #facc15;
+  margin-bottom: 5px;
+}
+
+#location {
+  text-align: center;
+  opacity: 0.8;
+  margin-bottom: 20px;
+}
+
+.today-card {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+  color: black;
+  font-weight: bold;
+  font-size: 22px;
+}
+
+.today-card span {
+  display: block;
+  font-size: 28px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
 }
 
 th, td {
-  padding: 10px;
-  border: 1px solid #334155;
+  padding: 12px;
+  border-bottom: 1px solid #1f2937;
+  text-align: center;
 }
 
 th {
-  background: #1e293b;
-}
-
-.today {
-  background: #22c55e;
-  color: black;
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.highlight {
+  background: #0f172a;
   color: #facc15;
-  font-weight: bold;
 }
+
+.future-row {
+  background: #020617;
+}
+
+.future-row:hover {
+  background: #111827;
+}
+
 </style>
 </head>
 
@@ -52,6 +74,10 @@ th {
 <h1>🌙 Ramadan Calendar</h1>
 <p id="location">Loading location...</p>
 
+<div id="todayCard" class="today-card">
+Loading today's times...
+</div>
+
 <table>
 <thead>
 <tr>
@@ -59,7 +85,6 @@ th {
 <th>Date</th>
 <th>Sehri</th>
 <th>Iftar</th>
-<th>Witr Reminder</th>
 </tr>
 </thead>
 <tbody id="calendar"></tbody>
@@ -81,25 +106,34 @@ async function getRamadanTimes(city) {
 }
 
 function buildCalendar(data) {
-  const today = new Date().getDate();
+  const today = new Date();
   const tbody = document.getElementById("calendar");
+  const todayCard = document.getElementById("todayCard");
 
   data.data.forEach((day, i) => {
-    const row = document.createElement("tr");
+    const d = new Date(day.date.gregorian.date);
+
+    if (d < today.setHours(0,0,0,0)) return; // hide past days
 
     const sehri = day.timings.Fajr.split(" ")[0];
     const iftar = day.timings.Maghrib.split(" ")[0];
 
-    if (day.date.gregorian.day == today) {
-      row.className = "today";
+    if (d.toDateString() === new Date().toDateString()) {
+      todayCard.innerHTML = `
+        TODAY
+        <span>Sehri: ${sehri}</span>
+        <span>Iftar: ${iftar}</span>
+      `;
     }
+
+    const row = document.createElement("tr");
+    row.className = "future-row";
 
     row.innerHTML = `
       <td>${i + 1}</td>
       <td>${day.date.gregorian.date}</td>
-      <td class="${day.date.gregorian.day == today ? 'highlight' : ''}">${sehri}</td>
-      <td class="${day.date.gregorian.day == today ? 'highlight' : ''}">${iftar}</td>
-      <td>After Isha</td>
+      <td>${sehri}</td>
+      <td>${iftar}</td>
     `;
 
     tbody.appendChild(row);
