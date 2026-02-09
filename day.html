@@ -2,49 +2,41 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Day Details</title>
+<title>Day</title>
 
 <style>
-body{font-family:system-ui;background:#020617;color:white;padding:12px}
+body{
+ font-family:system-ui;
+ background:linear-gradient(#dbeafe,#f8fafc);
+ padding:12px;
+ color:#0f172a;
+}
 
-.nav{display:flex;gap:10px;margin-bottom:10px}
+.nav{display:flex;gap:8px;margin-bottom:10px}
 .nav button{
- flex:1;padding:10px;border:none;border-radius:10px;
- background:#22c55e;color:black;font-weight:bold
+ flex:1;padding:10px;border:none;border-radius:12px;
+ background:#22c55e;color:white;font-weight:bold
 }
 
-.header{text-align:center;margin-bottom:10px}
-
-.off{
- background:#facc15;
- color:black;
- padding:6px 10px;
- border-radius:10px;
- font-weight:bold;
- display:inline-block;
- margin-top:6px;
-}
-
-.card{
- background:rgba(255,255,255,0.08);
- border-radius:14px;
+.glass{
+ backdrop-filter:blur(14px);
+ background:rgba(255,255,255,0.6);
+ border:1px solid rgba(255,255,255,0.8);
+ border-radius:16px;
  padding:14px;
  margin-bottom:10px;
 }
 
-.next{
- background:#22c55e;
- color:black;
+.next{background:#22c55e;color:white;font-weight:bold}
+.off{
+ background:#facc15;
+ padding:6px 10px;
+ border-radius:10px;
+ display:inline-block;
  font-weight:bold;
- box-shadow:0 0 12px #22c55e;
 }
 
-.temp{
- font-size:20px;
- text-align:center;
- color:#38bdf8;
- margin-bottom:10px;
-}
+.temp{text-align:center;font-size:18px}
 </style>
 </head>
 
@@ -55,12 +47,10 @@ body{font-family:system-ui;background:#020617;color:white;padding:12px}
 <button onclick="history.back()">⬅ Back</button>
 </div>
 
-<div class="header">
 <h2 id="date"></h2>
-<div id="offBadge"></div>
-</div>
+<div id="off"></div>
 
-<div class="temp" id="temp">Loading weather…</div>
+<div class="glass temp" id="temp">Loading weather…</div>
 <div id="times"></div>
 
 <script>
@@ -70,14 +60,12 @@ const d=parseInt(q.get("d"));
 const year=new Date().getFullYear();
 
 const dateObj=new Date(year,m,d);
-const weekday=dateObj.toLocaleDateString("en-US",{weekday:"long"});
 document.getElementById("date").innerText=
-`${weekday}, ${dateObj.toDateString()}`;
+dateObj.toDateString();
 
-if(dateObj.getDay()==5 || dateObj.getDay()==6){
- document.getElementById("offBadge").innerHTML=
+if(dateObj.getDay()==5 || dateObj.getDay()==6)
+ document.getElementById("off").innerHTML=
  '<div class="off">OFF DAY</div>';
-}
 
 function to12(t){
  let [h,m]=t.split(":");
@@ -88,28 +76,28 @@ function to12(t){
 }
 
 async function loadPrayer(){
- const res=await fetch(
+ const r=await fetch(
  `https://api.aladhan.com/v1/timingsByCity/${d}-${m+1}-${year}?city=Ruwais&country=Qatar`
  );
- const j=await res.json();
+ const j=await r.json();
  const t=j.data.timings;
 
  const order=["Fajr","Dhuhr","Asr","Maghrib","Isha"];
  const now=new Date();
 
  order.forEach(p=>{
-  const card=document.createElement("div");
-  card.className="card";
-  card.innerText=p+" — "+to12(t[p]);
+  const c=document.createElement("div");
+  c.className="glass";
+  c.innerText=p+" — "+to12(t[p]);
 
   const pt=new Date();
   const [h,mm]=t[p].split(":");
   pt.setHours(h,mm);
 
   if(pt>now && !document.querySelector(".next"))
-   card.classList.add("next");
+   c.classList.add("next");
 
-  document.getElementById("times").appendChild(card);
+  document.getElementById("times").appendChild(c);
  });
 }
 
@@ -119,7 +107,7 @@ async function weather(){
  );
  const w=await r.json();
  document.getElementById("temp").innerText=
- `Temperature: ${w.current_weather.temperature}°C`;
+ `🌡 ${w.current_weather.temperature}°C`;
 }
 
 loadPrayer();
