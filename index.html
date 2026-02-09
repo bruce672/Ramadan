@@ -7,31 +7,31 @@
 <style>
 body{
  font-family:system-ui;
- background:#020617;
- color:white;
+ background:linear-gradient(#dbeafe,#f8fafc);
  padding:12px;
+ color:#0f172a;
 }
 
-h1{text-align:center;color:#facc15;margin-bottom:6px}
+h1{text-align:center;margin-bottom:10px}
 
-/* dashboard card */
+/* glass card */
+.glass{
+ backdrop-filter:blur(14px);
+ background:rgba(255,255,255,0.6);
+ border:1px solid rgba(255,255,255,0.8);
+ border-radius:18px;
+ box-shadow:0 8px 20px rgba(0,0,0,.1);
+}
+
 .dashboard{
- background:linear-gradient(135deg,#22c55e,#38bdf8);
- color:black;
- border-radius:16px;
  padding:16px;
  text-align:center;
  font-weight:bold;
  margin-bottom:14px;
- box-shadow:0 0 20px rgba(56,189,248,.5);
 }
 
-.temp{
- font-size:14px;
- margin-top:4px;
-}
+.temp{font-size:14px;margin-top:4px}
 
-/* months grid */
 .grid{
  display:grid;
  grid-template-columns:repeat(2,1fr);
@@ -39,25 +39,20 @@ h1{text-align:center;color:#facc15;margin-bottom:6px}
 }
 
 .month{
- background:rgba(255,255,255,0.08);
- border:1px solid rgba(255,255,255,0.15);
- border-radius:14px;
- padding:14px;
+ padding:16px;
  text-align:center;
  cursor:pointer;
 }
 
-.month:hover{background:#22c55e;color:black}
+.month:hover{background:#22c55e;color:white}
 </style>
 </head>
 
 <body>
 
-<h1>🌙 Ramadan Dashboard</h1>
+<h1>🌙 Ramadan</h1>
 
-<div class="dashboard" id="dash">
-Loading Ramadan times…
-</div>
+<div class="dashboard glass" id="dash">Loading…</div>
 
 <div class="grid" id="cal"></div>
 
@@ -70,32 +65,24 @@ function to12(t){
  return `${h}:${m} ${a}`;
 }
 
-/* load prayer today */
 async function loadDash(){
  const now=new Date();
  const d=now.getDate();
  const m=now.getMonth()+1;
  const y=now.getFullYear();
 
- const res=await fetch(
+ const r=await fetch(
  `https://api.aladhan.com/v1/timingsByCity/${d}-${m}-${y}?city=Ruwais&country=Qatar`
  );
-
- const j=await res.json();
+ const j=await r.json();
  const t=j.data.timings;
 
- const sehri=to12(t.Fajr);
- const iftar=to12(t.Maghrib);
-
- document.getElementById("dash").innerHTML=`
- Today — Ruwais 🇶🇦<br>
- Sehri: ${sehri}<br>
- Iftar: ${iftar}
- `;
-
+ document.getElementById("dash").innerHTML=
+ `Today — Ruwais 🇶🇦<br>
+ Sehri: ${to12(t.Fajr)}<br>
+ Iftar: ${to12(t.Maghrib)}`;
 }
 
-/* weather */
 async function weather(){
  const r=await fetch(
  `https://api.open-meteo.com/v1/forecast?latitude=25.89&longitude=51.19&current_weather=true`
@@ -105,7 +92,6 @@ async function weather(){
  `<div class="temp">🌡 ${w.current_weather.temperature}°C</div>`;
 }
 
-/* months */
 const months=[
 "January","February","March","April","May","June",
 "July","August","September","October","November","December"
@@ -113,7 +99,7 @@ const months=[
 
 months.forEach((m,i)=>{
  const d=document.createElement("div");
- d.className="month";
+ d.className="month glass";
  d.innerText=m;
  d.onclick=()=>location.href=`month.html?m=${i}`;
  document.getElementById("cal").appendChild(d);
