@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Month</title>
+<style>
+body{font-family:system-ui;background:#020617;color:white;padding:10px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{
+ background:rgba(255,255,255,0.08);
+ border-radius:10px;
+ padding:10px;
+ text-align:center;
+ cursor:pointer;
+}
+.day:hover{background:#22c55e;color:black}
+.today{background:#facc15;color:black;font-weight:bold}
+</style>
+</head>
+
+<body>
+
+<h2 id="title"></h2>
+<div class="grid" id="days"></div>
+
+<script>
+const url=new URLSearchParams(location.search);
+const m=parseInt(url.get("m"));
+
+const months=[
+"January","February","March","April","May","June",
+"July","August","September","October","November","December"
+];
+
+document.getElementById("title").innerText=months[m];
+
+const year=new Date().getFullYear();
+const days=new Date(year,m+1,0).getDate();
+const today=new Date();
+
+for(let i=1;i<=days;i++){
+ const d=document.createElement("div");
+ d.className="day";
+ d.innerText=i;
+
+ if(today.getMonth()==m && today.getDate()==i)
+  d.classList.add("today");
+
+ d.onclick=()=>location.href=`day.html?m=${m}&d=${i}`;
+ document.getElementById("days").appendChild(d);
+}
+</script>
+
+</body>
+</html>
