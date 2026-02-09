@@ -2,12 +2,36 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Calendar</title>
+<title>Ramadan Dashboard</title>
 
 <style>
-body{font-family:system-ui;background:#020617;color:white;padding:12px}
-h1{text-align:center;color:#facc15}
+body{
+ font-family:system-ui;
+ background:#020617;
+ color:white;
+ padding:12px;
+}
 
+h1{text-align:center;color:#facc15;margin-bottom:6px}
+
+/* dashboard card */
+.dashboard{
+ background:linear-gradient(135deg,#22c55e,#38bdf8);
+ color:black;
+ border-radius:16px;
+ padding:16px;
+ text-align:center;
+ font-weight:bold;
+ margin-bottom:14px;
+ box-shadow:0 0 20px rgba(56,189,248,.5);
+}
+
+.temp{
+ font-size:14px;
+ margin-top:4px;
+}
+
+/* months grid */
 .grid{
  display:grid;
  grid-template-columns:repeat(2,1fr);
@@ -29,24 +53,74 @@ h1{text-align:center;color:#facc15}
 
 <body>
 
-<h1>📅 Calendar</h1>
+<h1>🌙 Ramadan Dashboard</h1>
+
+<div class="dashboard" id="dash">
+Loading Ramadan times…
+</div>
+
 <div class="grid" id="cal"></div>
 
 <script>
+function to12(t){
+ let [h,m]=t.split(":");
+ h=parseInt(h);
+ const a=h>=12?"PM":"AM";
+ h=h%12||12;
+ return `${h}:${m} ${a}`;
+}
+
+/* load prayer today */
+async function loadDash(){
+ const now=new Date();
+ const d=now.getDate();
+ const m=now.getMonth()+1;
+ const y=now.getFullYear();
+
+ const res=await fetch(
+ `https://api.aladhan.com/v1/timingsByCity/${d}-${m}-${y}?city=Ruwais&country=Qatar`
+ );
+
+ const j=await res.json();
+ const t=j.data.timings;
+
+ const sehri=to12(t.Fajr);
+ const iftar=to12(t.Maghrib);
+
+ document.getElementById("dash").innerHTML=`
+ Today — Ruwais 🇶🇦<br>
+ Sehri: ${sehri}<br>
+ Iftar: ${iftar}
+ `;
+
+}
+
+/* weather */
+async function weather(){
+ const r=await fetch(
+ `https://api.open-meteo.com/v1/forecast?latitude=25.89&longitude=51.19&current_weather=true`
+ );
+ const w=await r.json();
+ document.getElementById("dash").innerHTML+=
+ `<div class="temp">🌡 ${w.current_weather.temperature}°C</div>`;
+}
+
+/* months */
 const months=[
 "January","February","March","April","May","June",
 "July","August","September","October","November","December"
 ];
-
-const cal=document.getElementById("cal");
 
 months.forEach((m,i)=>{
  const d=document.createElement("div");
  d.className="month";
  d.innerText=m;
  d.onclick=()=>location.href=`month.html?m=${i}`;
- cal.appendChild(d);
+ document.getElementById("cal").appendChild(d);
 });
+
+loadDash();
+weather();
 </script>
 
 </body>
