@@ -8,8 +8,8 @@
 <style>
 body {
   font-family: system-ui, Arial;
-  background: #0b0f1a;
-  color: #f1f5f9;
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  color: white;
   margin: 0;
   padding: 20px;
 }
@@ -20,41 +20,54 @@ h1 {
 }
 
 .today-card {
-  background: linear-gradient(135deg, #38bdf8, #22c55e);
-  padding: 22px;
-  border-radius: 14px;
-  margin: 20px 0;
+  background: linear-gradient(135deg, #22c55e, #38bdf8);
+  padding: 20px;
+  border-radius: 16px;
   text-align: center;
   font-weight: bold;
   font-size: 22px;
+  margin: 20px 0;
   color: black;
-  box-shadow: 0 0 20px rgba(34,197,94,0.4);
+  box-shadow: 0 0 25px rgba(56,189,248,0.5);
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 15px;
 }
 
-th, td {
-  padding: 12px;
-  border-bottom: 1px solid #1f2937;
+.day-box {
+  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 15px;
   text-align: center;
+  transition: 0.3s;
+  cursor: pointer;
 }
 
-th {
-  background: #020617;
-  color: #facc15;
+.day-box:hover {
+  transform: scale(1.05);
+  background: rgba(255,255,255,0.15);
 }
 
-tr:hover {
-  background: #111827;
-}
-
-.today-row {
-  background: #22c55e;
+.today-box {
+  background: linear-gradient(135deg, #22c55e, #38bdf8);
   color: black;
   font-weight: bold;
+  box-shadow: 0 0 20px rgba(34,197,94,0.6);
+}
+
+.date {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.time {
+  margin-top: 6px;
+  font-size: 16px;
 }
 
 footer {
@@ -67,25 +80,15 @@ footer {
 
 <body>
 
-<h1>🌙 Ruwais, Qatar Ramadan Calendar</h1>
+<h1>🌙 Ruwais Ramadan Calendar</h1>
 
 <div id="todayCard" class="today-card">
 Loading today's times...
 </div>
 
-<table>
-<thead>
-<tr>
-<th>Day</th>
-<th>Date</th>
-<th>Sehri</th>
-<th>Iftar</th>
-</tr>
-</thead>
-<tbody id="calendar"></tbody>
-</table>
+<div id="grid" class="grid"></div>
 
-<footer>Times powered by Aladhan API</footer>
+<footer>Ruwais, Qatar • 12-hour format</footer>
 
 <script>
 function to12hr(time) {
@@ -97,7 +100,7 @@ function to12hr(time) {
 }
 
 async function load() {
-  const tbody = document.getElementById("calendar");
+  const grid = document.getElementById("grid");
   const todayCard = document.getElementById("todayCard");
   const year = new Date().getFullYear();
 
@@ -115,25 +118,26 @@ async function load() {
     const sehri = to12hr(day.timings.Fajr.split(" ")[0]);
     const iftar = to12hr(day.timings.Maghrib.split(" ")[0]);
 
-    const row = document.createElement("tr");
+    const box = document.createElement("div");
+    box.className = "day-box";
 
     if (d.toDateString() === new Date().toDateString()) {
-      row.className = "today-row";
+      box.classList.add("today-box");
       todayCard.innerHTML = `
-        TODAY — Ruwais, Qatar
+        TODAY — Ruwais
         <div>Sehri: ${sehri}</div>
         <div>Iftar: ${iftar}</div>
       `;
     }
 
-    row.innerHTML = `
-      <td>${i + 1}</td>
-      <td>${day.date.gregorian.date}</td>
-      <td>${sehri}</td>
-      <td>${iftar}</td>
+    box.innerHTML = `
+      <div><b>Day ${i + 1}</b></div>
+      <div class="date">${day.date.gregorian.date}</div>
+      <div class="time">Sehri: ${sehri}</div>
+      <div class="time">Iftar: ${iftar}</div>
     `;
 
-    tbody.appendChild(row);
+    grid.appendChild(box);
   });
 }
 
