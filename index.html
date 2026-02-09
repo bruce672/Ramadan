@@ -17,13 +17,25 @@ body {
 h1 {
   text-align: center;
   color: #facc15;
-  margin-bottom: 5px;
 }
 
-#location {
+.controls {
   text-align: center;
-  opacity: 0.8;
   margin-bottom: 20px;
+}
+
+input, button {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: none;
+}
+
+button {
+  background: #22c55e;
+  color: black;
+  cursor: pointer;
+  margin-left: 5px;
 }
 
 .today-card {
@@ -35,11 +47,6 @@ h1 {
   color: black;
   font-weight: bold;
   font-size: 22px;
-}
-
-.today-card span {
-  display: block;
-  font-size: 28px;
 }
 
 table {
@@ -58,25 +65,25 @@ th {
   color: #facc15;
 }
 
-.future-row {
-  background: #020617;
+.loading {
+  text-align: center;
+  opacity: 0.7;
 }
-
-.future-row:hover {
-  background: #111827;
-}
-
 </style>
 </head>
 
 <body>
 
 <h1>🌙 Ramadan Calendar</h1>
-<p id="location">Loading location...</p>
 
-<div id="todayCard" class="today-card">
-Loading today's times...
+<div class="controls">
+  <input id="city" placeholder="Enter city (e.g. Karachi)" />
+  <button onclick="load()">Load</button>
 </div>
+
+<div id="todayCard" class="today-card">Enter city to load times</div>
+
+<p id="status" class="loading"></p>
 
 <table>
 <thead>
@@ -91,62 +98,57 @@ Loading today's times...
 </table>
 
 <script>
-async function getLocation() {
-  const res = await fetch("https://ipapi.co/json/");
-  const data = await res.json();
-  return data.city + "," + data.country_name;
-}
-
-async function getRamadanTimes(city) {
-  const year = new Date().getFullYear();
-  const res = await fetch(
-    `https://api.aladhan.com/v1/calendarByCity/${year}/3?city=${city.split(",")[0]}&country=${city.split(",")[1]}&method=2`
-  );
-  return await res.json();
-}
-
-function buildCalendar(data) {
-  const today = new Date();
+async function load() {
+  const city = document.getElementById("city").value || "Karachi";
+  const status = document.getElementById("status");
   const tbody = document.getElementById("calendar");
   const todayCard = document.getElementById("todayCard");
 
-  data.data.forEach((day, i) => {
-    const d = new Date(day.date.gregorian.date);
+  tbody.innerHTML = "";
+  status.innerText = "Loading…";
 
-    if (d < today.setHours(0,0,0,0)) return; // hide past days
+  try {
+    const year = new Date().getFullYear();
 
-    const sehri = day.timings.Fajr.split(" ")[0];
-    const iftar = day.timings.Maghrib.split(" ")[0];
+    const res = await fetch(
+      `https://api.aladhan.com/v1/calendarByCity/${year}/3?city=${city}&country=Pakistan&method=2`
+    );
 
-    if (d.toDateString() === new Date().toDateString()) {
-      todayCard.innerHTML = `
-        TODAY
-        <span>Sehri: ${sehri}</span>
-        <span>Iftar: ${iftar}</span>
+    const data = await res.json();
+    const today = new Date();
+
+    data.data.forEach((day, i) => {
+      const d = new Date(day.date.gregorian.date);
+      if (d < today.setHours(0,0,0,0)) return;
+
+      const sehri = day.timings.Fajr.split(" ")[0];
+      const iftar = day.timings.Maghrib.split(" ")[0];
+
+      if (d.toDateString() === new Date().toDateString()) {
+        todayCard.innerHTML = `
+          TODAY — ${city}
+          <div>Sehri: ${sehri}</div>
+          <div>Iftar: ${iftar}</div>
+        `;
+      }
+
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${day.date.gregorian.date}</td>
+        <td>${sehri}</td>
+        <td>${iftar}</td>
       `;
-    }
+      tbody.appendChild(row);
+    });
 
-    const row = document.createElement("tr");
-    row.className = "future-row";
-
-    row.innerHTML = `
-      <td>${i + 1}</td>
-      <td>${day.date.gregorian.date}</td>
-      <td>${sehri}</td>
-      <td>${iftar}</td>
-    `;
-
-    tbody.appendChild(row);
-  });
+    status.innerText = "";
+  } catch (e) {
+    status.innerText = "Error loading data. Try another city.";
+  }
 }
 
-(async function init() {
-  const city = await getLocation();
-  document.getElementById("location").innerText = "Location: " + city;
-
-  const data = await getRamadanTimes(city);
-  buildCalendar(data);
-})();
+load(); // auto-load default
 </script>
 
 </body>
