@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ramadan Calendar</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+h1 {
+  color: #facc15;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #334155;
+}
+
+th {
+  background: #1e293b;
+}
+
+.today {
+  background: #22c55e;
+  color: black;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.highlight {
+  color: #facc15;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🌙 Ramadan Calendar</h1>
+<p id="location">Loading location...</p>
+
+<table>
+<thead>
+<tr>
+<th>Day</th>
+<th>Date</th>
+<th>Sehri</th>
+<th>Iftar</th>
+<th>Witr Reminder</th>
+</tr>
+</thead>
+<tbody id="calendar"></tbody>
+</table>
+
+<script>
+async function getLocation() {
+  const res = await fetch("https://ipapi.co/json/");
+  const data = await res.json();
+  return data.city + "," + data.country_name;
+}
+
+async function getRamadanTimes(city) {
+  const year = new Date().getFullYear();
+  const res = await fetch(
+    `https://api.aladhan.com/v1/calendarByCity/${year}/3?city=${city.split(",")[0]}&country=${city.split(",")[1]}&method=2`
+  );
+  return await res.json();
+}
+
+function buildCalendar(data) {
+  const today = new Date().getDate();
+  const tbody = document.getElementById("calendar");
+
+  data.data.forEach((day, i) => {
+    const row = document.createElement("tr");
+
+    const sehri = day.timings.Fajr.split(" ")[0];
+    const iftar = day.timings.Maghrib.split(" ")[0];
+
+    if (day.date.gregorian.day == today) {
+      row.className = "today";
+    }
+
+    row.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${day.date.gregorian.date}</td>
+      <td class="${day.date.gregorian.day == today ? 'highlight' : ''}">${sehri}</td>
+      <td class="${day.date.gregorian.day == today ? 'highlight' : ''}">${iftar}</td>
+      <td>After Isha</td>
+    `;
+
+    tbody.appendChild(row);
+  });
+}
+
+(async function init() {
+  const city = await getLocation();
+  document.getElementById("location").innerText = "Location: " + city;
+
+  const data = await getRamadanTimes(city);
+  buildCalendar(data);
+})();
+</script>
+
+</body>
+</html>
