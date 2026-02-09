@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day Details</title>
+<style>
+body{font-family:system-ui;background:#020617;color:white;padding:12px}
+.card{
+ background:rgba(255,255,255,0.08);
+ border-radius:14px;
+ padding:14px;
+ margin-bottom:10px;
+}
+.next{
+ background:#22c55e;
+ color:black;
+ font-weight:bold;
+}
+.temp{
+ font-size:20px;
+ text-align:center;
+ color:#38bdf8;
+}
+</style>
+</head>
+
+<body>
+
+<h2 id="date"></h2>
+<div class="temp" id="temp">Loading weather…</div>
+<div id="times"></div>
+
+<script>
+const q=new URLSearchParams(location.search);
+const m=q.get("m");
+const d=q.get("d");
+const year=new Date().getFullYear();
+
+document.getElementById("date").innerText=
+ new Date(year,m,d).toDateString();
+
+function to12(t){
+ let [h,m]=t.split(":");
+ h=parseInt(h);
+ const a=h>=12?"PM":"AM";
+ h=h%12||12;
+ return `${h}:${m} ${a}`;
+}
+
+async function loadPrayer(){
+ const res=await fetch(
+ `https://api.aladhan.com/v1/timingsByCity/${d}-${m*1+1}-${year}?city=Ruwais&country=Qatar`
+ );
+ const j=await res.json();
+ const t=j.data.timings;
+
+ const order=["Fajr","Dhuhr","Asr","Maghrib","Isha"];
+ const now=new Date();
+
+ order.forEach(p=>{
+  const card=document.createElement("div");
+  card.className="card";
+  card.innerText=p+" — "+to12(t[p]);
+
+  const pt=new Date();
+  const [h,mm]=t[p].split(":");
+  pt.setHours(h,mm);
+
+  if(pt>now && !document.querySelector(".next"))
+   card.classList.add("next");
+
+  document.getElementById("times").appendChild(card);
+ });
+}
+
+async function weather(){
+ const r=await fetch(
+ `https://api.open-meteo.com/v1/forecast?latitude=25.89&longitude=51.19&current_weather=true`
+ );
+ const w=await r.json();
+ document.getElementById("temp").innerText=
+  `Temperature: ${w.current_weather.temperature}°C`;
+}
+
+loadPrayer();
+weather();
+</script>
+
+</body>
+</html>
