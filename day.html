@@ -3,41 +3,79 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Day Details</title>
+
 <style>
-body{font-family:system-ui;background:#020617;color:white;padding:12px}
+body{
+ font-family:system-ui;
+ background:#020617;
+ color:white;
+ padding:12px;
+}
+
+.header{
+ text-align:center;
+ margin-bottom:10px;
+}
+
+.off{
+ background:#facc15;
+ color:black;
+ padding:6px 10px;
+ border-radius:10px;
+ font-weight:bold;
+ display:inline-block;
+ margin-top:6px;
+}
+
 .card{
  background:rgba(255,255,255,0.08);
  border-radius:14px;
  padding:14px;
  margin-bottom:10px;
 }
+
 .next{
  background:#22c55e;
  color:black;
  font-weight:bold;
+ box-shadow:0 0 12px #22c55e;
 }
+
 .temp{
  font-size:20px;
  text-align:center;
  color:#38bdf8;
+ margin-bottom:10px;
 }
 </style>
 </head>
 
 <body>
 
-<h2 id="date"></h2>
+<div class="header">
+ <h2 id="date"></h2>
+ <div id="offBadge"></div>
+</div>
+
 <div class="temp" id="temp">Loading weather…</div>
 <div id="times"></div>
 
 <script>
 const q=new URLSearchParams(location.search);
-const m=q.get("m");
-const d=q.get("d");
+const m=parseInt(q.get("m"));
+const d=parseInt(q.get("d"));
 const year=new Date().getFullYear();
 
+const dateObj=new Date(year,m,d);
+const weekday=dateObj.toLocaleDateString("en-US",{weekday:"long"});
 document.getElementById("date").innerText=
- new Date(year,m,d).toDateString();
+ `${weekday}, ${dateObj.toDateString()}`;
+
+/* Qatar weekend = Friday (5) + Saturday (6) */
+if(dateObj.getDay()==5 || dateObj.getDay()==6){
+ document.getElementById("offBadge").innerHTML=
+  '<div class="off">OFF DAY</div>';
+}
 
 function to12(t){
  let [h,m]=t.split(":");
@@ -49,7 +87,7 @@ function to12(t){
 
 async function loadPrayer(){
  const res=await fetch(
- `https://api.aladhan.com/v1/timingsByCity/${d}-${m*1+1}-${year}?city=Ruwais&country=Qatar`
+ `https://api.aladhan.com/v1/timingsByCity/${d}-${m+1}-${year}?city=Ruwais&country=Qatar`
  );
  const j=await res.json();
  const t=j.data.timings;
