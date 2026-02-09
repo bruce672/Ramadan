@@ -5,23 +5,17 @@
 <title>Month</title>
 
 <style>
-body{
- font-family:system-ui;
- background:#020617;
- color:white;
- padding:12px;
+body{font-family:system-ui;background:#020617;color:white;padding:12px}
+
+.nav{display:flex;gap:10px;margin-bottom:10px}
+.nav button{
+ flex:1;padding:10px;border:none;border-radius:10px;
+ background:#22c55e;color:black;font-weight:bold
 }
 
-h2{
- text-align:center;
- margin-bottom:10px;
-}
+h2{text-align:center;margin-bottom:10px}
 
-.grid{
- display:grid;
- grid-template-columns:repeat(7,1fr);
- gap:6px;
-}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 
 .day{
  background:#111827;
@@ -32,31 +26,20 @@ h2{
  font-size:12px;
 }
 
-.day:hover{
- background:#22c55e;
- color:black;
-}
+.day:hover{background:#22c55e;color:black}
+.today{background:#facc15;color:black;font-weight:bold}
+.off{background:#ef4444;color:white}
 
-.today{
- background:#facc15;
- color:black;
- font-weight:bold;
-}
-
-.off{
- background:#ef4444;
- color:white;
-}
-
-.event{
- font-size:9px;
- opacity:.8;
- margin-top:2px;
-}
+.event{font-size:9px;opacity:.8;margin-top:2px}
 </style>
 </head>
 
 <body>
+
+<div class="nav">
+<button onclick="location.href='index.html'">🏠 Home</button>
+<button onclick="history.back()">⬅ Back</button>
+</div>
 
 <h2 id="title"></h2>
 <div class="grid" id="days"></div>
@@ -76,10 +59,9 @@ const year=new Date().getFullYear();
 const totalDays=new Date(year,m+1,0).getDate();
 const today=new Date();
 
-/* Qatar events */
 const events={
  "12-18":"National Day 🇶🇦",
- "3-11":"Sports Day",
+ "2-11":"Sports Day"
 };
 
 for(let i=1;i<=totalDays;i++){
@@ -101,7 +83,6 @@ for(let i=1;i<=totalDays;i++){
  if(today.getMonth()==m && today.getDate()==i)
   d.classList.add("today");
 
-/* Qatar weekend Fri(5) Sat(6) */
  if(dateObj.getDay()==5 || dateObj.getDay()==6)
   d.classList.add("off");
 
