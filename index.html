@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ramadan Calendar</title>
+<title>Ruwais Ramadan Calendar</title>
 
 <style>
 body {
   font-family: system-ui, Arial;
-  background: #020617;
-  color: white;
+  background: #0b0f1a;
+  color: #f1f5f9;
   margin: 0;
   padding: 20px;
 }
@@ -19,34 +19,16 @@ h1 {
   color: #facc15;
 }
 
-.controls {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-input, button {
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 6px;
-  border: none;
-}
-
-button {
-  background: #22c55e;
-  color: black;
-  cursor: pointer;
-  margin-left: 5px;
-}
-
 .today-card {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  background: linear-gradient(135deg, #38bdf8, #22c55e);
+  padding: 22px;
+  border-radius: 14px;
+  margin: 20px 0;
   text-align: center;
-  color: black;
   font-weight: bold;
   font-size: 22px;
+  color: black;
+  box-shadow: 0 0 20px rgba(34,197,94,0.4);
 }
 
 table {
@@ -61,12 +43,23 @@ th, td {
 }
 
 th {
-  background: #0f172a;
+  background: #020617;
   color: #facc15;
 }
 
-.loading {
+tr:hover {
+  background: #111827;
+}
+
+.today-row {
+  background: #22c55e;
+  color: black;
+  font-weight: bold;
+}
+
+footer {
   text-align: center;
+  margin-top: 20px;
   opacity: 0.7;
 }
 </style>
@@ -74,16 +67,11 @@ th {
 
 <body>
 
-<h1>🌙 Ramadan Calendar</h1>
+<h1>🌙 Ruwais, Qatar Ramadan Calendar</h1>
 
-<div class="controls">
-  <input id="city" placeholder="Enter city (e.g. Karachi)" />
-  <button onclick="load()">Load</button>
+<div id="todayCard" class="today-card">
+Loading today's times...
 </div>
-
-<div id="todayCard" class="today-card">Enter city to load times</div>
-
-<p id="status" class="loading"></p>
 
 <table>
 <thead>
@@ -97,58 +85,59 @@ th {
 <tbody id="calendar"></tbody>
 </table>
 
+<footer>Times powered by Aladhan API</footer>
+
 <script>
-async function load() {
-  const city = document.getElementById("city").value || "Karachi";
-  const status = document.getElementById("status");
-  const tbody = document.getElementById("calendar");
-  const todayCard = document.getElementById("todayCard");
-
-  tbody.innerHTML = "";
-  status.innerText = "Loading…";
-
-  try {
-    const year = new Date().getFullYear();
-
-    const res = await fetch(
-      `https://api.aladhan.com/v1/calendarByCity/${year}/3?city=${city}&country=Pakistan&method=2`
-    );
-
-    const data = await res.json();
-    const today = new Date();
-
-    data.data.forEach((day, i) => {
-      const d = new Date(day.date.gregorian.date);
-      if (d < today.setHours(0,0,0,0)) return;
-
-      const sehri = day.timings.Fajr.split(" ")[0];
-      const iftar = day.timings.Maghrib.split(" ")[0];
-
-      if (d.toDateString() === new Date().toDateString()) {
-        todayCard.innerHTML = `
-          TODAY — ${city}
-          <div>Sehri: ${sehri}</div>
-          <div>Iftar: ${iftar}</div>
-        `;
-      }
-
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${i + 1}</td>
-        <td>${day.date.gregorian.date}</td>
-        <td>${sehri}</td>
-        <td>${iftar}</td>
-      `;
-      tbody.appendChild(row);
-    });
-
-    status.innerText = "";
-  } catch (e) {
-    status.innerText = "Error loading data. Try another city.";
-  }
+function to12hr(time) {
+  let [h, m] = time.split(":");
+  h = parseInt(h);
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${h}:${m} ${ampm}`;
 }
 
-load(); // auto-load default
+async function load() {
+  const tbody = document.getElementById("calendar");
+  const todayCard = document.getElementById("todayCard");
+  const year = new Date().getFullYear();
+
+  const res = await fetch(
+    `https://api.aladhan.com/v1/calendarByCity/${year}/3?city=Ruwais&country=Qatar&method=2`
+  );
+
+  const data = await res.json();
+  const today = new Date();
+
+  data.data.forEach((day, i) => {
+    const d = new Date(day.date.gregorian.date);
+    if (d < today.setHours(0,0,0,0)) return;
+
+    const sehri = to12hr(day.timings.Fajr.split(" ")[0]);
+    const iftar = to12hr(day.timings.Maghrib.split(" ")[0]);
+
+    const row = document.createElement("tr");
+
+    if (d.toDateString() === new Date().toDateString()) {
+      row.className = "today-row";
+      todayCard.innerHTML = `
+        TODAY — Ruwais, Qatar
+        <div>Sehri: ${sehri}</div>
+        <div>Iftar: ${iftar}</div>
+      `;
+    }
+
+    row.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${day.date.gregorian.date}</td>
+      <td>${sehri}</td>
+      <td>${iftar}</td>
+    `;
+
+    tbody.appendChild(row);
+  });
+}
+
+load();
 </script>
 
 </body>
