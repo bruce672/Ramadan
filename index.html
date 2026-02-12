@@ -2,86 +2,101 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prayer Dashboard</title>
+<title>Ramadan Dashboard</title>
 
 <style>
 body{
  margin:0;
  font-family:system-ui;
- background:linear-gradient(#06351f,#02140b);
+ background:linear-gradient(#062b1a,#010a06);
  color:white;
  overflow-x:hidden;
 }
 
-/* ARCH HEADER */
+/* HEADER */
 .header{
  position:relative;
- padding:30px 15px 20px;
+ padding:28px 15px;
  text-align:center;
- background:linear-gradient(#0e7c44,#075c32);
- border-bottom-left-radius:40px;
- border-bottom-right-radius:40px;
- box-shadow:0 10px 30px rgba(0,0,0,.4);
+ background:linear-gradient(#0c8a4b,#065c32);
+ border-bottom-left-radius:45px;
+ border-bottom-right-radius:45px;
+ box-shadow:0 15px 40px rgba(0,0,0,.6);
 }
 
-.header:before{
+/* lantern glow */
+.header::before{
  content:"";
  position:absolute;
  inset:0;
  background:
- radial-gradient(circle at 20% 20%,rgba(255,255,255,.08),transparent 40%),
- radial-gradient(circle at 80% 10%,rgba(255,255,255,.05),transparent 40%);
- border-bottom-left-radius:40px;
- border-bottom-right-radius:40px;
+ radial-gradient(circle at 15% 10%,rgba(255,255,255,.12),transparent 40%),
+ radial-gradient(circle at 85% 5%,rgba(255,255,255,.08),transparent 40%);
+ animation:glow 6s infinite alternate;
+ border-bottom-left-radius:45px;
+ border-bottom-right-radius:45px;
 }
 
-.prayer{
- font-size:18px;
- opacity:.9;
+@keyframes glow{
+ from{opacity:.4}
+ to{opacity:1}
 }
 
+.prayer{font-size:18px;opacity:.9}
 .bigtime{
- font-size:52px;
+ font-size:54px;
  font-weight:bold;
- margin:4px 0;
  letter-spacing:1px;
 }
 
-/* GOLD STRIP */
+/* gold shimmer fasting strip */
 .fast{
  margin-top:8px;
- background:linear-gradient(#f8e08a,#d4af37);
+ background:linear-gradient(90deg,#f8e08a,#d4af37,#f8e08a);
+ background-size:200% 100%;
+ animation:shine 3s linear infinite;
  color:#3b2a00;
  padding:8px;
- border-radius:20px;
+ border-radius:22px;
  font-weight:bold;
 }
 
-/* CONTENT */
+@keyframes shine{
+ from{background-position:0%}
+ to{background-position:200%}
+}
+
+.countdown{
+ margin-top:5px;
+ font-size:14px;
+ opacity:.85;
+}
+
+/* content */
 .container{
  padding:15px;
- margin-bottom:70px;
+ margin-bottom:80px;
 }
 
 .card{
- background:rgba(255,255,255,.05);
- border-radius:18px;
+ background:rgba(255,255,255,.06);
+ border-radius:20px;
  padding:14px;
  margin-bottom:12px;
- backdrop-filter:blur(8px);
- box-shadow:0 0 15px rgba(0,0,0,.4);
+ backdrop-filter:blur(10px);
+ box-shadow:0 0 18px rgba(0,0,0,.5);
  animation:fade .5s ease;
 }
 
 @keyframes fade{
- from{opacity:0;transform:translateY(12px)}
+ from{opacity:0;transform:translateY(15px)}
  to{opacity:1}
 }
 
 .row{
  display:flex;
  justify-content:space-between;
- padding:10px 4px;
+ padding:10px 5px;
  border-bottom:1px solid rgba(255,255,255,.08);
  font-size:15px;
 }
@@ -91,25 +106,25 @@ body{
 .next{
  background:#22c55e;
  color:black;
- border-radius:12px;
+ border-radius:14px;
  padding:6px;
  font-weight:bold;
 }
 
-/* BOTTOM NAV */
+/* bottom nav */
 .bottom{
  position:fixed;
  bottom:0;
  left:0;
  right:0;
- background:linear-gradient(#0e7c44,#075c32);
+ background:linear-gradient(#0c8a4b,#065c32);
  display:flex;
- box-shadow:0 -5px 20px rgba(0,0,0,.5);
+ box-shadow:0 -8px 25px rgba(0,0,0,.7);
 }
 
 .bottom button{
  flex:1;
- padding:12px;
+ padding:14px;
  border:none;
  background:none;
  color:white;
@@ -124,29 +139,47 @@ body{
  <div class="prayer" id="current">Loading…</div>
  <div class="bigtime" id="big">--:--</div>
  <div class="fast" id="fast">Loading fasting time…</div>
+ <div class="countdown" id="countdown">Calculating next prayer…</div>
 </div>
 
 <div class="container">
 
 <div class="card" id="hijri">Hijri loading…</div>
-
 <div class="card" id="list"></div>
 
 </div>
 
 <div class="bottom">
-<button onclick="location.href='index.html'">Home</button>
+<button>Home</button>
 <button onclick="location.href='month.html?m=2'">Calendar</button>
 <button onclick="alert('More features soon')">More</button>
 </div>
 
 <script>
+let nextPrayerTime;
+
 function to12(t){
  let [h,m]=t.split(":");
  h=parseInt(h);
  const a=h>=12?"PM":"AM";
  h=h%12||12;
  return `${h}:${m} ${a}`;
+}
+
+function startCountdown(){
+ setInterval(()=>{
+  if(!nextPrayerTime) return;
+  const now=new Date();
+  const diff=nextPrayerTime-now;
+  if(diff<=0) return;
+
+  const h=Math.floor(diff/3600000);
+  const m=Math.floor(diff%3600000/60000);
+  const s=Math.floor(diff%60000/1000);
+
+  document.getElementById("countdown").innerText=
+  `Next prayer in ${h}h ${m}m ${s}s`;
+ },1000);
 }
 
 async function load(){
@@ -169,7 +202,6 @@ async function load(){
  `Sehri ${to12(t.Fajr)} • Iftar ${to12(t.Maghrib)}`;
 
  const order=["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
- const nowTime=new Date();
 
  order.forEach(p=>{
   const row=document.createElement("div");
@@ -180,14 +212,17 @@ async function load(){
   const [h,mm]=t[p].split(":");
   pt.setHours(h,mm);
 
-  if(pt>nowTime && !document.querySelector(".next")){
+  if(pt>now && !nextPrayerTime){
    row.classList.add("next");
+   nextPrayerTime=pt;
    document.getElementById("current").innerText=p;
    document.getElementById("big").innerText=to12(t[p]);
   }
 
   document.getElementById("list").appendChild(row);
  });
+
+ startCountdown();
 }
 
 load();
