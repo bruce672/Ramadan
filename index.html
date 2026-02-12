@@ -2,42 +2,57 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ramadan Dashboard</title>
+<title>Prayer Dashboard</title>
 
 <style>
-:root{
- --bg:linear-gradient(#dbeafe,#f8fafc);
- --text:#0f172a;
- --glass:rgba(255,255,255,0.6);
-}
-
-.dark{
- --bg:#020617;
- --text:white;
- --glass:rgba(255,255,255,0.08);
-}
-
 body{
  margin:0;
  font-family:system-ui;
- background:var(--bg);
- color:var(--text);
- padding:12px;
- margin-bottom:70px;
- transition:.3s;
+ background:#071c12;
+ color:white;
 }
 
-h1{text-align:center}
+/* HEADER */
+.header{
+ background:linear-gradient(#0b6b3a,#094d2a);
+ padding:20px;
+ text-align:center;
+ border-bottom-left-radius:30px;
+ border-bottom-right-radius:30px;
+ box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
 
-/* glass card */
-.glass{
- backdrop-filter:blur(14px);
- background:var(--glass);
- border-radius:18px;
- border:1px solid rgba(255,255,255,.4);
- padding:16px;
+.prayer{
+ font-size:18px;
+ opacity:.9;
+}
+
+.bigtime{
+ font-size:48px;
+ font-weight:bold;
+ margin:5px 0;
+}
+
+.fast{
+ background:#d4af37;
+ color:black;
+ padding:8px;
+ border-radius:20px;
+ font-weight:bold;
+}
+
+/* content */
+.container{
+ padding:15px;
+}
+
+.card{
+ background:#0e2b1d;
+ border-radius:16px;
+ padding:14px;
  margin-bottom:12px;
- animation:fade .6s ease;
+ box-shadow:0 0 15px rgba(0,0,0,.3);
+ animation:fade .4s ease;
 }
 
 @keyframes fade{
@@ -45,22 +60,29 @@ h1{text-align:center}
  to{opacity:1}
 }
 
-.grid{
- display:grid;
- grid-template-columns:repeat(2,1fr);
- gap:10px;
+.row{
+ display:flex;
+ justify-content:space-between;
+ padding:8px 0;
+ border-bottom:1px solid rgba(255,255,255,.08);
 }
 
-.month{cursor:pointer;text-align:center}
+.next{
+ background:#22c55e;
+ color:black;
+ font-weight:bold;
+ border-radius:10px;
+ padding:6px;
+}
 
 /* bottom nav */
 .bottom{
  position:fixed;
- bottom:0;left:0;right:0;
+ bottom:0;
+ left:0;
+ right:0;
+ background:#0b6b3a;
  display:flex;
- background:var(--glass);
- backdrop-filter:blur(14px);
- border-top:1px solid rgba(255,255,255,.3);
 }
 
 .bottom button{
@@ -68,33 +90,35 @@ h1{text-align:center}
  padding:12px;
  border:none;
  background:none;
- font-size:16px;
+ color:white;
+ font-size:14px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🌙 Ramadan</h1>
+<div class="header">
+ <div class="prayer" id="current">Loading…</div>
+ <div class="bigtime" id="big">--:--</div>
+ <div class="fast" id="fast">Loading fasting time…</div>
+</div>
 
-<div class="glass" id="dash">Loading…</div>
+<div class="container">
 
-<div class="grid" id="cal"></div>
+<div class="card" id="hijri">Hijri loading…</div>
+
+<div class="card" id="list"></div>
+
+</div>
 
 <div class="bottom">
-<button onclick="location.href='index.html'">🏠</button>
-<button onclick="toggleTheme()">🌗</button>
+<button onclick="location.href='index.html'">Home</button>
+<button onclick="location.href='month.html?m=2'">Calendar</button>
+<button onclick="toggleTheme()">Theme</button>
 </div>
 
 <script>
-function toggleTheme(){
- document.body.classList.toggle("dark");
- localStorage.setItem("theme",
- document.body.classList.contains("dark")?"dark":"light");
-}
-if(localStorage.getItem("theme")==="dark")
- document.body.classList.add("dark");
-
 function to12(t){
  let [h,m]=t.split(":");
  h=parseInt(h);
@@ -103,7 +127,7 @@ function to12(t){
  return `${h}:${m} ${a}`;
 }
 
-async function loadDash(){
+async function load(){
  const now=new Date();
  const d=now.getDate();
  const m=now.getMonth()+1;
@@ -116,34 +140,40 @@ async function loadDash(){
  const t=j.data.timings;
  const hijri=j.data.date.hijri;
 
- document.getElementById("dash").innerHTML=
- `Hijri: ${hijri.day} ${hijri.month.en} ${hijri.year}<br>
- Sehri: ${to12(t.Fajr)}<br>
- Iftar: ${to12(t.Maghrib)}`;
+ document.getElementById("hijri").innerText=
+ `Hijri: ${hijri.day} ${hijri.month.en} ${hijri.year}`;
 
- const w=await fetch(
- `https://api.open-meteo.com/v1/forecast?latitude=25.89&longitude=51.19&current_weather=true`
- );
- const weather=await w.json();
+ document.getElementById("fast").innerText=
+ `Sehri ${to12(t.Fajr)} • Iftar ${to12(t.Maghrib)}`;
 
- document.getElementById("dash").innerHTML+=
- `<br>🌡 ${weather.current_weather.temperature}°C`;
+ const order=["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+ const nowTime=new Date();
+
+ order.forEach(p=>{
+  const row=document.createElement("div");
+  row.className="row";
+  row.innerHTML=`<span>${p}</span><span>${to12(t[p])}</span>`;
+
+  const pt=new Date();
+  const [h,mm]=t[p].split(":");
+  pt.setHours(h,mm);
+
+  if(pt>nowTime && !document.querySelector(".next")){
+   row.classList.add("next");
+   document.getElementById("current").innerText=p;
+   document.getElementById("big").innerText=to12(t[p]);
+  }
+
+  document.getElementById("list").appendChild(row);
+ });
 }
 
-const months=[
-"January","February","March","April","May","June",
-"July","August","September","October","November","December"
-];
+function toggleTheme(){
+ document.body.style.background =
+ document.body.style.background=="#071c12"?"#000":"#071c12";
+}
 
-months.forEach((m,i)=>{
- const d=document.createElement("div");
- d.className="glass month";
- d.innerText=m;
- d.onclick=()=>location.href=`month.html?m=${i}`;
- document.getElementById("cal").appendChild(d);
-});
-
-loadDash();
+load();
 </script>
 
 </body>
