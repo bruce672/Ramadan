@@ -1,0 +1,284 @@
+import { useState, useEffect, useRef } from "react";
+
+// ─── Data ──────────────────────────────────────────────────────────────────
+const PRAYERS = [
+  { key: "Fajr",    icon: "🌙", label: "Fajr"    },
+  { key: "Dhuhr",   icon: "☀️", label: "Dhuhr"   },
+  { key: "Asr",     icon: "🌤️", label: "Asr"     },
+  { key: "Maghrib", icon: "🌅", label: "Maghrib"  },
+  { key: "Isha",    icon: "⭐", label: "Isha"     },
+];
+
+const VERSES = [
+  { arabic: "إِنَّ مَعَ الْعُسْرِ يُسْرًا", english: "Indeed, with hardship comes ease.", ref: "Surah Ash-Sharh 94:6" },
+  { arabic: "وَاللَّهُ يُحِبُّ الصَّابِرِينَ", english: "And Allah loves the patient.", ref: "Surah Ali 'Imran 3:146" },
+  { arabic: "وَهُوَ مَعَكُمْ أَيْنَ مَا كُنتُمْ", english: "He is with you wherever you are.", ref: "Surah Al-Hadid 57:4" },
+  { arabic: "رَبِّ زِدْنِي عِلْمًا", english: "My Lord, increase me in knowledge.", ref: "Surah Ta-Ha 20:114" },
+  { arabic: "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ", english: "Allah is sufficient and He is the best disposer of affairs.", ref: "Surah Ali 'Imran 3:173" },
+  { arabic: "إِنَّ اللَّهَ مَعَ الصَّابِرِينَ", english: "Indeed, Allah is with the patient.", ref: "Surah Al-Baqarah 2:153" },
+  { arabic: "وَمَا تَوْفِيقِي إِلَّا بِاللَّهِ", english: "And my success is not but through Allah.", ref: "Surah Hud 11:88" },
+  { arabic: "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا", english: "For indeed, with hardship will be ease.", ref: "Surah Ash-Sharh 94:5" },
+];
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+function parseTime(str) {
+  if (!str) return null;
+  const [time, period] = str.split(" ");
+  let [h, m] = time.split(":").map(Number);
+  if (period === "PM" && h !== 12) h += 12;
+  if (period === "AM" && h === 12) h = 0;
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+function formatCountdown(ms) {
+  if (ms <= 0) return "00:00:00";
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return [h, m, s].map((v) => String(v).padStart(2, "0")).join(":");
+}
+
+function Particles() {
+  const particles = Array.from({ length: 18 }, (_, i) => ({
+    id: i,
+    size: Math.random() * 3 + 1,
+    left: Math.random() * 100,
+    duration: Math.random() * 15 + 10,
+    delay: Math.random() * 15,
+  }));
+  return (
+    <>
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="particle"
+          style={{
+            width: p.size,
+            height: p.size,
+            left: `${p.left}%`,
+            animationDuration: `${p.duration}s`,
+            animationDelay: `${p.delay}s`,
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
+// ─── Main App ──────────────────────────────────────────────────────────────
+export default function App() {
+  const [now, setNow] = useState(new Date());
+  const [location, setLocation] = useState(null);
+  const [locationName, setLocationName] = useState("Detecting location…");
+  const [prayerTimes, setPrayerTimes] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [verseIndex, setVerseIndex] = useState(() => Math.floor(Math.random() * VERSES.length));
+  const [verseAnim, setVerseAnim] = useState(true);
+
+  // Clock
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Geolocation
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationName("London, UK");
+      setLocation({ lat: 51.5074, lng: -0.1278 });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {
+        setLocationName("London, UK");
+        setLocation({ lat: 51.5074, lng: -0.1278 });
+      }
+    );
+  }, []);
+
+  // Fetch prayer times when location ready
+  useEffect(() => {
+    if (!location) return;
+    setLoading(true);
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, "0");
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const yyyy = today.getFullYear();
+    const url = `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}?latitude=${location.lat}&longitude=${location.lng}&method=2`;
+
+    fetch(url)
+      .then((r) => r.json())
+      .then((data) => {
+        const t = data.data.timings;
+        const meta = data.data.meta;
+        setPrayerTimes({ Fajr: t.Fajr, Dhuhr: t.Dhuhr, Asr: t.Asr, Maghrib: t.Maghrib, Isha: t.Isha });
+        setLocationName(`${meta.timezone.split("/")[1]?.replace("_", " ") || "Your Location"}`);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Could not fetch prayer times. Please refresh.");
+        setLoading(false);
+      });
+  }, [location]);
+
+  // Next prayer & countdown
+  const getNextPrayer = () => {
+    if (!prayerTimes) return null;
+    for (const p of PRAYERS) {
+      const t = parseTime(prayerTimes[p.key]);
+      if (t && t > now) return { name: p.label, time: t };
+    }
+    // All passed → next is Fajr tomorrow
+    const fajr = parseTime(prayerTimes["Fajr"]);
+    if (fajr) fajr.setDate(fajr.getDate() + 1);
+    return fajr ? { name: "Fajr", time: fajr } : null;
+  };
+
+  const nextPrayer = getNextPrayer();
+  const countdown = nextPrayer ? formatCountdown(nextPrayer.time - now) : "--:--:--";
+
+  const isActivePrayer = (key) => {
+    if (!prayerTimes || !nextPrayer) return false;
+    const idx = PRAYERS.findIndex((p) => p.label === nextPrayer.name);
+    const prevIdx = (idx - 1 + PRAYERS.length) % PRAYERS.length;
+    return PRAYERS[prevIdx].key === key;
+  };
+
+  const changeVerse = (dir) => {
+    setVerseAnim(false);
+    setTimeout(() => {
+      setVerseIndex((i) => (i + dir + VERSES.length) % VERSES.length);
+      setVerseAnim(true);
+    }, 200);
+  };
+
+  const verse = VERSES[verseIndex];
+
+  // Date strings
+  const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const dateStr = now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+
+  return (
+    <>
+      <div className="bg-animated" />
+      <div className="orb orb-1" />
+      <div className="orb orb-2" />
+      <div className="orb orb-3" />
+      <Particles />
+
+      <div className="app-container">
+        {/* Header */}
+        <header className="header fade-up">
+          <div className="owner-badge">✦ Alamin's Prayer App ✦</div>
+          <div className="bismillah">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+          <h1 className="gradient-text">Islamic Prayer Times</h1>
+          <p className="subtitle">Salah — The Pillar of Faith</p>
+          <div style={{ marginTop: "0.75rem" }}>
+            <span className="location-pill">
+              📍 {locationName}
+            </span>
+          </div>
+        </header>
+
+        {/* Clock + Next Prayer */}
+        <div className="main-grid" style={{ marginBottom: "1.5rem" }}>
+          <div className="glass fade-up delay-1" style={{ padding: "1.75rem", textAlign: "center" }}>
+            <div className="next-prayer-label">Current Time</div>
+            <div className="clock-display gradient-text">{timeStr}</div>
+            <div className="date-display">{dateStr}</div>
+          </div>
+
+          <div className="glass-gold pulse-glow fade-up delay-2" style={{ padding: "1.75rem", textAlign: "center" }}>
+            <div className="next-prayer-label">Next Prayer</div>
+            <div style={{ fontSize: "1.4rem", fontFamily: "'Cinzel', serif", fontWeight: 700, color: "#fff", marginBottom: "0.4rem" }}>
+              {nextPrayer ? nextPrayer.name : "—"}
+            </div>
+            <div className="next-prayer-label">Time Remaining</div>
+            <div className="countdown">{countdown}</div>
+          </div>
+        </div>
+
+        {/* Prayer Times */}
+        <div className="fade-up delay-3" style={{ marginBottom: "1.5rem" }}>
+          <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: "1.1rem", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "1rem", textAlign: "center" }}>
+            Today's Prayers
+          </h2>
+          {loading ? (
+            <div className="glass" style={{ padding: "2.5rem", textAlign: "center" }}>
+              <div className="spinner" />
+              <p style={{ marginTop: "1rem", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem" }}>Calculating prayer times…</p>
+            </div>
+          ) : error ? (
+            <div className="glass" style={{ padding: "2rem", textAlign: "center", color: "#ff8a80" }}>{error}</div>
+          ) : (
+            <div className="prayers-grid">
+              {PRAYERS.map((p, i) => (
+                <div
+                  key={p.key}
+                  className={`glass prayer-card prayer-row fade-up delay-${i + 1}`}
+                  style={{ animationDelay: `${0.35 + i * 0.08}s`, ...(isActivePrayer(p.key) ? { background: "rgba(212,175,55,0.12)", borderColor: "rgba(212,175,55,0.5)" } : {}) }}
+                >
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <span className="prayer-icon">{p.icon}</span>
+                    <span className="prayer-name">{p.label}</span>
+                    {isActivePrayer(p.key) && (
+                      <span style={{ marginLeft: "0.6rem", fontSize: "0.65rem", background: "rgba(212,175,55,0.25)", border: "1px solid rgba(212,175,55,0.5)", borderRadius: "50px", padding: "2px 8px", color: "#ffe88a", letterSpacing: "0.1em" }}>NOW</span>
+                    )}
+                  </div>
+                  <span className="prayer-time">{prayerTimes?.[p.key] || "—"}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Quran Verse */}
+        <div className="glass quran-card fade-up delay-5">
+          <div style={{ fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.25em", color: "rgba(255,255,255,0.4)", marginBottom: "1.2rem" }}>
+            ✦ Verse of the Day ✦
+          </div>
+          <div
+            className="arabic-verse"
+            style={{
+              transition: "opacity 0.2s",
+              opacity: verseAnim ? 1 : 0,
+              marginBottom: "1rem",
+            }}
+          >
+            {verse.arabic}
+          </div>
+          <p
+            style={{
+              color: "rgba(255,255,255,0.8)",
+              fontStyle: "italic",
+              fontSize: "1.05rem",
+              lineHeight: 1.7,
+              transition: "opacity 0.2s",
+              opacity: verseAnim ? 1 : 0,
+              marginBottom: "0.5rem",
+            }}
+          >
+            "{verse.english}"
+          </p>
+          <p style={{ color: "rgba(212,175,55,0.6)", fontSize: "0.8rem", letterSpacing: "0.1em" }}>{verse.ref}</p>
+          <div className="verse-nav">
+            <button className="btn-gold" onClick={() => changeVerse(-1)}>‹ Prev</button>
+            <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.8rem" }}>{verseIndex + 1} / {VERSES.length}</span>
+            <button className="btn-gold" onClick={() => changeVerse(1)}>Next ›</button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="footer fade-up delay-6">
+          <p>Built with 🤍 for Alamin &nbsp;·&nbsp; May Allah accept your prayers</p>
+          <p style={{ marginTop: "0.3rem" }}>Prayer times via AlAdhan API &nbsp;·&nbsp; {new Date().getFullYear()}</p>
+        </footer>
+      </div>
+    </>
+  );
+}
